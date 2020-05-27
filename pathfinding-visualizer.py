@@ -1,9 +1,5 @@
-#import pygame and it's constants
-import pygame
-import sys
+import pygame, sys, time
 from pygame.locals import *
-
-import time
 
 #program constants
 win_width = 1280
@@ -24,12 +20,9 @@ class Node:
         return self.x == other.x and self.y == other.y
         
 
-#initialize pygame window
+#initialize pygame and create a window
 def initializeWin():
-    #initialize pygame
     pygame.init()
-
-    #create a window
     window = pygame.display.set_mode((win_width,win_height))
     pygame.display.set_caption("Search Visualizer")
 
@@ -67,6 +60,7 @@ def inputs():
     keys["esc"] = keyInputs[27]
     keys["s"] = keyInputs[115]
     keys["e"] = keyInputs[101]
+    keys["space"] = keyInputs[32]
     
     return mouse, keys
 
@@ -212,18 +206,18 @@ def drawPath(win,grid,path):
 
 def main():
     
-    #initialize window
+    #initialize window and grid
     win = initializeWin()
     grid = initializeGrid()
 
-    #start and end variables
+    #start and end points
     start = [(0,0),False]
     end = [(0,0),False]
 
     #flag to stop user from editing when pathfinding is happening
     editing = True 
+    find = False
 
-    #main loop
     while True:
         
         #check to see if program should quit
@@ -235,18 +229,25 @@ def main():
         #get mouse and relevent key inputs        
         mouse, keys = inputs()
 
+        #if editing, update grid
         if editing:
             #update the grid
             start,end = updateGrid(grid,mouse,keys,start,end)
-        else:
+        else: #if not check to see if user wants to begin editing
             if(mouse["lmb"] == 1):
                 grid = resetGrid(grid,start[0],end[0])
                 editing = True
                 time.sleep(0.1)
 
-        if(start[1] == True and end[1] == True):
+        #begin pathfinding if theres a start and end point
+        if(keys["space"] == 1):
+            if(start[1] == True and end[1] == True):
+                find = True
+
+        #begin a*
+        if(start[1] == True and end[1] == True and find == True):
             astar(win,grid,start[0],end[0])
-            editing = start[1] = end[1] = False
+            editing = find = False
         
         #draw a white screen
         win.fill(Color(255, 255, 255))
