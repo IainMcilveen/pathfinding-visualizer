@@ -135,32 +135,38 @@ def astar(win,grid,sCords,eCords):
 
         #if the current node is the end node, done
         if(curNode.char == "E"):
-            print("4")
             break
 
         #generate the child nodes
         childNodes = []
-        for cord in [(1,0),(-1,0),(0,1),(0,-1)]:
+        for cord in [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,1),(1,-1),(-1,-1)]:
             childX = curNode.x+cord[0]
             childY = curNode.y+cord[1]
             #check to make sure that the child node is not out of bounds
-            print(childX,childY)
             if(childX < 0 or childX > (int(win_width/gridScale)-1) or childY < 0 or childY > (int(win_height/gridScale)-1)):
-                print("1")
                 continue
             #check to make sure that the child node is not a wall
             if(grid[childX][childY].char == "W"):
-                print("2")
                 continue
             #check to make sure that child is not already in openList
             inOpenList = False
             for node in openList:
-                if(node.x == childX or node.y == childY):
+                if(node.x == childX and node.y == childY):
                     inOpenList = True
                     break
-            if(inOpenList == True):
-                print("3")
+            if(inOpenList):
                 continue
+
+            #check to see if the node is in the closed list, if it is check the g score
+            inClosedList = False
+            for node in closedList:
+                if(node.x == childX and node.y == childY):
+                    inClosedList = True
+                    break
+            if(inClosedList):
+                newG = curNode.g + 1
+                if(newG > grid[childX][childY].g):
+                    continue
                     
             #calculate the g,h,f values
             grid[childX][childY].g = curNode.g + 1
@@ -171,10 +177,12 @@ def astar(win,grid,sCords,eCords):
             openList.append(grid[childX][childY])
 
     print(path)
+    for coord in path:
+        grid[coord[0]][coord[1]].color = Color(0,0,0)
 
-
-
-
+    draw(grid,win)
+    pygame.display.update()
+    time.sleep(2)
 
 def main():
     
