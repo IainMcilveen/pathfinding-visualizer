@@ -21,6 +21,7 @@ class Node:
         self.f = 0
         self.g = 0
         self.h = 0
+        self.parent = None
 
 #initialize pygame window
 def initializeWin():
@@ -135,6 +136,9 @@ def astar(win,grid,sCords,eCords):
 
         #if the current node is the end node, done
         if(curNode.char == "E"):
+            while curNode is not None:
+                path.append((curNode.x,curNode.y))
+                curNode = curNode.parent
             break
 
         #generate the child nodes
@@ -148,6 +152,11 @@ def astar(win,grid,sCords,eCords):
             #check to make sure that the child node is not a wall
             if(grid[childX][childY].char == "W"):
                 continue
+            
+            grid[childX][childY].parent = curNode
+            childNodes.append(grid[childX][childY])
+            
+        for child in childNodes:
             #check to make sure that child is not already in openList
             inOpenList = False
             for node in openList:
@@ -156,6 +165,12 @@ def astar(win,grid,sCords,eCords):
                     break
             if(inOpenList):
                 continue
+
+             #calculate the g,h,f values
+            grid[childX][childY].g = curNode.g + 1
+            grid[childX][childY].h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)
+            grid[childX][childY].f = grid[childX][childY].g + grid[childX][childY].h
+
 
             #check to see if the node is in the closed list, if it is check the g score
             inClosedList = False
@@ -167,13 +182,6 @@ def astar(win,grid,sCords,eCords):
                 newG = curNode.g + 1
                 if(newG > grid[childX][childY].g):
                     continue
-                else:
-                    path.remove((childX,childY))
-                    
-            #calculate the g,h,f values
-            grid[childX][childY].g = curNode.g + 1
-            grid[childX][childY].h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)
-            grid[childX][childY].f = grid[childX][childY].g + grid[childX][childY].h
 
             #add child to the open list
             openList.append(grid[childX][childY])
