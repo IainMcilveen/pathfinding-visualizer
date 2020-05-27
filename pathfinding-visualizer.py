@@ -10,18 +10,16 @@ win_width = 1280
 win_height = 720
 gridScale = 40
 
-#create a node class to act as each point in the grid
+#create a node class to act as each point in the grid for a*
 class Node:
-    def __init__(self,char,x,y):
-        self.char = char
+    def __init__(self,parent,x,y):
+        self.parent = None
         self.x = x
         self.y = y
-        self.color = Color(255,255,255)
-        #attributes for a*
         self.f = 0
         self.g = 0
         self.h = 0
-        self.parent = None
+        
 
 #initialize pygame window
 def initializeWin():
@@ -41,8 +39,7 @@ def initializeGrid():
     for y in range(int(win_width/gridScale)):
         grid.append([])
         for x in range(int(win_height/gridScale)):
-            #grid[y].append([" ",(y*gridScale,x*gridScale),0,0,0])
-            grid[y].append(Node(" ",y,x))
+            grid[y].append([" ",(y*gridScale,x*gridScale)])
     return grid
 
 #get user inputs
@@ -74,10 +71,19 @@ def inputs():
 def draw(grid,win):
     for row in grid:
         for sqr in row:
+            #get the color of the square
+            if(sqr[0] == " "):
+                gridColor = Color(255,255,255)
+            elif(sqr[0] == "W"):
+                gridColor = Color(96,96,96)
+            elif(sqr[0] == "S"):
+                gridColor = Color(0,255,0)
+            elif(sqr[0] == "E"):
+                gridColor = Color(255,0,0)
 
             #draw square with a slightly larger one for a black border
-            pygame.draw.rect(win,Color(0,0,0),(sqr.x*gridScale,sqr.y*gridScale,gridScale,gridScale))
-            pygame.draw.rect(win,sqr.color,((sqr.x*gridScale)+1,(sqr.y*gridScale)+1,gridScale-2,gridScale-2))
+            pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
+            pygame.draw.rect(win,gridColor,(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
 
 #update the grid with user input
 def updateGrid(grid,mouse,keys,start,end):
@@ -86,26 +92,16 @@ def updateGrid(grid,mouse,keys,start,end):
     
     #set the grid points based on mouse and key presses
     if(mouse["rmb"] == 1):
-        grid[gridX][gridY].char = " "
-        grid[gridX][gridY].color = Color(255,255,255)
+        grid[gridX][gridY][0] = " "
     elif(mouse["lmb"] == 1):
-        grid[gridX][gridY].char = "W"
-        grid[gridX][gridY].color = Color(96,96,96)
+        grid[gridX][gridY][0] = "W"
     elif(keys["e"] == 1):
-        #reset old end point
-        grid[end[0]][end[1]].char = " "
-        grid[end[0]][end[1]].color = Color(255,255,255)
-        
-        grid[gridX][gridY].char = "E"
-        grid[gridX][gridY].color = Color(255,0,0)
+        grid[end[0]][end[1]][0] = " "
+        grid[gridX][gridY][0] = "E"
         end = (gridX,gridY,True)
     elif(keys["s"] == 1):
-        #reset old start point
-        grid[start[0]][start[1]].char = " "
-        grid[start[0]][start[1]].color = Color(255,255,255)
-        
-        grid[gridX][gridY].char = "S"
-        grid[gridX][gridY].color = Color(0,255,0)
+        grid[start[0]][start[1]][0] = " "
+        grid[gridX][gridY][0] = "S"
         start = (gridX,gridY,True)
 
     return start,end
@@ -136,8 +132,10 @@ def astar(win,grid,sCords,eCords):
 
         #if the current node is the end node, done
         if(curNode.char == "E"):
+            print("here")
             while curNode is not None:
                 path.append((curNode.x,curNode.y))
+                print(curNode.x,curNode.y,curNode.char,"bruh")
                 curNode = curNode.parent
             break
 
@@ -148,9 +146,11 @@ def astar(win,grid,sCords,eCords):
             childY = curNode.y+cord[1]
             #check to make sure that the child node is not out of bounds
             if(childX < 0 or childX > (int(win_width/gridScale)-1) or childY < 0 or childY > (int(win_height/gridScale)-1)):
+                print("1")
                 continue
             #check to make sure that the child node is not a wall
             if(grid[childX][childY].char == "W"):
+                print("2")
                 continue
             
             grid[childX][childY].parent = curNode
@@ -164,6 +164,7 @@ def astar(win,grid,sCords,eCords):
                     inOpenList = True
                     break
             if(inOpenList):
+                print("3")
                 continue
 
              #calculate the g,h,f values
@@ -181,6 +182,7 @@ def astar(win,grid,sCords,eCords):
             if(inClosedList):
                 newG = curNode.g + 1
                 if(newG > grid[childX][childY].g):
+                    print("4")
                     continue
 
             #add child to the open list
