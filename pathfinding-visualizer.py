@@ -92,6 +92,16 @@ def draw(grid,win):
             pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
             pygame.draw.rect(win,gridColor,(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
 
+#reset the grid to allow for multiple pathfinding runs on the same grid
+def resetGrid(grid,sPos,ePos):
+    for row in grid:
+        for sqr in row:
+            if(sqr[0] == "P" or sqr[0] == "B"):
+                sqr[0] = " "
+    grid[sPos[0]][sPos[1]][0] = "S"
+    grid[ePos[0]][ePos[1]][0] = "E"
+    return grid
+
 #update the grid with user input
 def updateGrid(grid,mouse,keys,start,end):
     #convert coordinates of mouse into grid coordinates
@@ -103,13 +113,13 @@ def updateGrid(grid,mouse,keys,start,end):
     elif(mouse["lmb"] == 1):
         grid[gridX][gridY][0] = "W"
     elif(keys["e"] == 1):
-        grid[end[0]][end[1]][0] = " "
+        grid[end[0][0]][end[0][1]][0] = " "
         grid[gridX][gridY][0] = "E"
-        end = (gridX,gridY,True)
+        end = [(gridX,gridY),True]
     elif(keys["s"] == 1):
-        grid[start[0]][start[1]][0] = " "
+        grid[start[0][0]][start[0][1]][0] = " "
         grid[gridX][gridY][0] = "S"
-        start = (gridX,gridY,True)
+        start = [(gridX,gridY),True]
 
     return start,end
 
@@ -200,8 +210,6 @@ def drawPath(win,grid,path):
         pygame.display.update()
         time.sleep(0.005)
 
-    time.sleep(2)
-
 def main():
     
     #initialize window
@@ -209,8 +217,8 @@ def main():
     grid = initializeGrid()
 
     #start and end variables
-    start = (0,0,False)
-    end = (0,0,False)
+    start = [(0,0),False]
+    end = [(0,0),False]
 
     #flag to stop user from editing when pathfinding is happening
     editing = True 
@@ -224,17 +232,21 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        if editing:
-            #get mouse and relevent key inputs        
-            mouse, keys = inputs()
+        #get mouse and relevent key inputs        
+        mouse, keys = inputs()
 
+        if editing:
             #update the grid
             start,end = updateGrid(grid,mouse,keys,start,end)
+        else:
+            if(mouse["lmb"] == 1):
+                grid = resetGrid(grid,start[0],end[0])
+                editing = True
+                time.sleep(0.1)
 
-        if(start[2] == True and end[2] == True):
-            astar(win,grid,(start[0],start[1]),(end[0],end[1]))
-            pygame.quit()
-            sys.exit()
+        if(start[1] == True and end[1] == True):
+            astar(win,grid,start[0],end[0])
+            editing = start[1] = end[1] = False
         
         #draw a white screen
         win.fill(Color(255, 255, 255))
