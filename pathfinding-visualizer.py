@@ -41,8 +41,7 @@ def initializeGrid():
         grid.append([])
         for x in range(int(win_height/gridScale)):
             #grid[y].append([" ",(y*gridScale,x*gridScale),0,0,0])
-            grid[y].append(Node(" ",y*gridScale,x*gridScale))
-
+            grid[y].append(Node(" ",y,x))
     return grid
 
 #get user inputs
@@ -76,8 +75,8 @@ def draw(grid,win):
         for sqr in row:
 
             #draw square with a slightly larger one for a black border
-            pygame.draw.rect(win,Color(0,0,0),(sqr.x,sqr.y,gridScale,gridScale))
-            pygame.draw.rect(win,sqr.color,(sqr.x+1,sqr.y+1,gridScale-2,gridScale-2))
+            pygame.draw.rect(win,Color(0,0,0),(sqr.x*gridScale,sqr.y*gridScale,gridScale,gridScale))
+            pygame.draw.rect(win,sqr.color,((sqr.x*gridScale)+1,(sqr.y*gridScale)+1,gridScale-2,gridScale-2))
 
 #update the grid with user input
 def updateGrid(grid,mouse,keys,start,end):
@@ -136,6 +135,7 @@ def astar(win,grid,sCords,eCords):
 
         #if the current node is the end node, done
         if(curNode.char == "E"):
+            print("4")
             break
 
         #generate the child nodes
@@ -144,10 +144,13 @@ def astar(win,grid,sCords,eCords):
             childX = curNode.x+cord[0]
             childY = curNode.y+cord[1]
             #check to make sure that the child node is not out of bounds
+            print(childX,childY)
             if(childX < 0 or childX > (int(win_width/gridScale)-1) or childY < 0 or childY > (int(win_height/gridScale)-1)):
+                print("1")
                 continue
             #check to make sure that the child node is not a wall
             if(grid[childX][childY].char == "W"):
+                print("2")
                 continue
             #check to make sure that child is not already in openList
             inOpenList = False
@@ -156,6 +159,7 @@ def astar(win,grid,sCords,eCords):
                     inOpenList = True
                     break
             if(inOpenList == True):
+                print("3")
                 continue
                     
             #calculate the g,h,f values
@@ -203,6 +207,8 @@ def main():
 
         if(start[2] == True and end[2] == True):
             astar(win,grid,(start[0],start[1]),(end[0],end[1]))
+            pygame.quit()
+            sys.exit()
         
         #draw a white screen
         win.fill(Color(255, 255, 255))
