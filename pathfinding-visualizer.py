@@ -145,7 +145,8 @@ def astar(win,grid,sCords,eCords):
             while curNode is not None:
                 path.append((curNode.x,curNode.y))
                 curNode = curNode.parent
-            break
+            drawPath(win,grid,path[::-1])
+            return
 
         #generate the child nodes
         childNodes = []
@@ -191,12 +192,14 @@ def astar(win,grid,sCords,eCords):
             #add child to the open list
             openList.append(child)
 
-    print(path)
+def drawPath(win,grid,path):
+    
     for coord in path:
         grid[coord[0]][coord[1]][0] = "P"
+        draw(grid,win)
+        pygame.display.update()
+        time.sleep(0.005)
 
-    draw(grid,win)
-    pygame.display.update()
     time.sleep(2)
 
 def main():
