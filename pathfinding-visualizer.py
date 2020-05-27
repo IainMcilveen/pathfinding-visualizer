@@ -167,6 +167,8 @@ def astar(win,grid,sCords,eCords):
                 newG = curNode.g + 1
                 if(newG > grid[childX][childY].g):
                     continue
+                else:
+                    path.remove((childX,childY))
                     
             #calculate the g,h,f values
             grid[childX][childY].g = curNode.g + 1
