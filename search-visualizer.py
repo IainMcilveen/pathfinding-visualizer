@@ -6,11 +6,12 @@ from pygame.locals import *
 import time
 
 #program constants
-win_width = 640
-win_height = 480
+win_width = 1280
+win_height = 720
+gridScale = 40
 
 #initialize pygame window
-def initialize():
+def initializeWin():
     #initialize pygame
     pygame.init()
 
@@ -19,6 +20,18 @@ def initialize():
     pygame.display.set_caption("Search Visualizer")
 
     return window
+
+#initialize a grid to used
+def initializeGrid():
+
+    grid = []
+    for y in range(int(win_width/gridScale)):
+        grid.append([])
+        for x in range(int(win_height/gridScale)):
+            grid[y].append([" ",(y*gridScale,x*gridScale)])
+
+    return grid
+
 
 #get user inputs
 def inputs():
@@ -45,9 +58,25 @@ def inputs():
     
     return mouse, keys
 
+#draw the grid to the screen
+def draw(grid,win):
+    for row in grid:
+        for sqr in row:
+            #draw square with a lightly larger one for a black border
+            pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
+            pygame.draw.rect(win,Color(255,255,255),(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
+
+#update the grid with user input
+def updateGrid(grid,mouse,keys):
+    print(grid)
+
+
+
 def main():
     
-    win = initialize()
+    #initialize window
+    win = initializeWin()
+    grid = initializeGrid()
 
     #main loop
     while True:
@@ -63,6 +92,9 @@ def main():
 
         #draw a white screen
         win.fill(Color(255, 255, 255))
+
+        #draw the grid
+        draw(grid,win)
 
         #update the screen
         pygame.display.update()
