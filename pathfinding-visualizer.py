@@ -10,6 +10,18 @@ win_width = 1280
 win_height = 720
 gridScale = 40
 
+#create a node class to act as each point in the grid
+class Node:
+    def __init__(self,char,x,y):
+        self.char = char
+        self.x = x
+        self.y = y
+        self.color = Color(255,255,255)
+        #attributes for a*
+        self.f = 0
+        self.g = 0
+        self.h = 0
+
 #initialize pygame window
 def initializeWin():
     #initialize pygame
@@ -28,10 +40,10 @@ def initializeGrid():
     for y in range(int(win_width/gridScale)):
         grid.append([])
         for x in range(int(win_height/gridScale)):
-            grid[y].append([" ",(y*gridScale,x*gridScale)])
+            #grid[y].append([" ",(y*gridScale,x*gridScale),0,0,0])
+            grid[y].append(Node(" ",y*gridScale,x*gridScale))
 
     return grid
-
 
 #get user inputs
 def inputs():
@@ -62,20 +74,10 @@ def inputs():
 def draw(grid,win):
     for row in grid:
         for sqr in row:
-            
-            #get the color of the square
-            if(sqr[0] == " "):
-                gridColor = Color(255,255,255)
-            elif(sqr[0] == "W"):
-                gridColor = Color(96,96,96)
-            elif(sqr[0] == "S"):
-                gridColor = Color(0,255,0)
-            elif(sqr[0] == "E"):
-                gridColor = Color(255,0,0)
 
             #draw square with a slightly larger one for a black border
-            pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
-            pygame.draw.rect(win,gridColor,(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
+            pygame.draw.rect(win,Color(0,0,0),(sqr.x,sqr.y,gridScale,gridScale))
+            pygame.draw.rect(win,sqr.color,(sqr.x+1,sqr.y+1,gridScale-2,gridScale-2))
 
 #update the grid with user input
 def updateGrid(grid,mouse,keys,start,end):
@@ -84,19 +86,91 @@ def updateGrid(grid,mouse,keys,start,end):
     
     #set the grid points based on mouse and key presses
     if(mouse["rmb"] == 1):
-        grid[gridX][gridY][0] = " "
+        grid[gridX][gridY].char = " "
+        grid[gridX][gridY].color = Color(255,255,255)
     elif(mouse["lmb"] == 1):
-        grid[gridX][gridY][0] = "W"
+        grid[gridX][gridY].char = "W"
+        grid[gridX][gridY].color = Color(96,96,96)
     elif(keys["e"] == 1):
-        grid[end[0]][end[1]][0] = " "
-        grid[gridX][gridY][0] = "E"
-        end = (gridX,gridY)
+        #reset old end point
+        grid[end[0]][end[1]].char = " "
+        grid[end[0]][end[1]].color = Color(255,255,255)
+        
+        grid[gridX][gridY].char = "E"
+        grid[gridX][gridY].color = Color(255,0,0)
+        end = (gridX,gridY,True)
     elif(keys["s"] == 1):
-        grid[start[0]][start[1]][0] = " "
-        grid[gridX][gridY][0] = "S"
-        start = (gridX,gridY)
+        #reset old start point
+        grid[start[0]][start[1]].char = " "
+        grid[start[0]][start[1]].color = Color(255,255,255)
+        
+        grid[gridX][gridY].char = "S"
+        grid[gridX][gridY].color = Color(0,255,0)
+        start = (gridX,gridY,True)
 
     return start,end
+
+def astar(win,grid,sCords,eCords):
+
+    #initialize open and closed list, as well as list for storing the path
+    openList = []
+    closedList = []
+    path = []
+
+    openList.append(grid[sCords[0]][sCords[1]])
+
+    while(len(openList) > 0):
+
+        #get node in open list with smallest f value and make it the current node
+        curNode = None
+        for node in openList:
+            if(curNode == None or node.f < curNode.f):
+                curNode = node
+
+        #remove current node from openList and put it in the closedList
+        openList.remove(curNode)
+        closedList.append(curNode)
+
+        #add the coordinates of the current node to the path
+        path.append((curNode.x,curNode.y))
+
+        #if the current node is the end node, done
+        if(curNode.char == "E"):
+            break
+
+        #generate the child nodes
+        childNodes = []
+        for cord in [(1,0),(-1,0),(0,1),(0,-1)]:
+            childX = curNode.x+cord[0]
+            childY = curNode.y+cord[1]
+            #check to make sure that the child node is not out of bounds
+            if(childX < 0 or childX > (int(win_width/gridScale)-1) or childY < 0 or childY > (int(win_height/gridScale)-1)):
+                continue
+            #check to make sure that the child node is not a wall
+            if(grid[childX][childY].char == "W"):
+                continue
+            #check to make sure that child is not already in openList
+            inOpenList = False
+            for node in openList:
+                if(node.x == childX or node.y == childY):
+                    inOpenList = True
+                    break
+            if(inOpenList == True):
+                continue
+                    
+            #calculate the g,h,f values
+            grid[childX][childY].g = curNode.g + 1
+            grid[childX][childY].h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)
+            grid[childX][childY].f = grid[childX][childY].g + grid[childX][childY].h
+
+            #add child to the open list
+            openList.append(grid[childX][childY])
+
+    print(path)
+
+
+
+
 
 def main():
     
@@ -105,8 +179,11 @@ def main():
     grid = initializeGrid()
 
     #start and end variables
-    start = (0,0)
-    end = (31,17)
+    start = (0,0,False)
+    end = (0,0,False)
+
+    #flag to stop user from editing when pathfinding is happening
+    editing = True 
 
     #main loop
     while True:
@@ -117,12 +194,16 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        #get mouse and relevent key inputs        
-        mouse, keys = inputs()
+        if editing:
+            #get mouse and relevent key inputs        
+            mouse, keys = inputs()
 
-        #update the grid
-        start,end = updateGrid(grid,mouse,keys,start,end)
+            #update the grid
+            start,end = updateGrid(grid,mouse,keys,start,end)
 
+        if(start[2] == True and end[2] == True):
+            astar(win,grid,(start[0],start[1]),(end[0],end[1]))
+        
         #draw a white screen
         win.fill(Color(255, 255, 255))
 
