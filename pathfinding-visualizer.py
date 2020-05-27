@@ -13,12 +13,15 @@ gridScale = 40
 #create a node class to act as each point in the grid for a*
 class Node:
     def __init__(self,parent,x,y):
-        self.parent = None
+        self.parent = parent
         self.x = x
         self.y = y
         self.f = 0
         self.g = 0
         self.h = 0
+    #allow for comparison between nodes
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
         
 
 #initialize pygame window
@@ -80,6 +83,10 @@ def draw(grid,win):
                 gridColor = Color(0,255,0)
             elif(sqr[0] == "E"):
                 gridColor = Color(255,0,0)
+            elif(sqr[0] == "P"):
+                gridColor = Color(0,0,255)
+            elif(sqr[0] == "B"):
+                gridColor = Color(0,0,125)
 
             #draw square with a slightly larger one for a black border
             pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
@@ -111,31 +118,32 @@ def astar(win,grid,sCords,eCords):
     #initialize open and closed list, as well as list for storing the path
     openList = []
     closedList = []
-    path = []
 
-    openList.append(grid[sCords[0]][sCords[1]])
+    #create start and end nodes
+    startNode = Node(None,sCords[0],sCords[1])
+    startNode.g = startNode.f = startNode.h = 0
+    endNode = Node(None,eCords[0],eCords[1])
+    endNode.g = endNode.f = endNode.h = 0
+
+    openList.append(startNode)
 
     while(len(openList) > 0):
 
         #get node in open list with smallest f value and make it the current node
-        curNode = None
+        curNode = openList[0]
         for node in openList:
-            if(curNode == None or node.f < curNode.f):
+            if(node.f < curNode.f):
                 curNode = node
-
+        
         #remove current node from openList and put it in the closedList
         openList.remove(curNode)
         closedList.append(curNode)
 
-        #add the coordinates of the current node to the path
-        path.append((curNode.x,curNode.y))
-
         #if the current node is the end node, done
-        if(curNode.char == "E"):
-            print("here")
+        if(curNode == endNode):
+            path = []
             while curNode is not None:
                 path.append((curNode.x,curNode.y))
-                print(curNode.x,curNode.y,curNode.char,"bruh")
                 curNode = curNode.parent
             break
 
@@ -146,51 +154,46 @@ def astar(win,grid,sCords,eCords):
             childY = curNode.y+cord[1]
             #check to make sure that the child node is not out of bounds
             if(childX < 0 or childX > (int(win_width/gridScale)-1) or childY < 0 or childY > (int(win_height/gridScale)-1)):
-                print("1")
                 continue
             #check to make sure that the child node is not a wall
-            if(grid[childX][childY].char == "W"):
-                print("2")
+            if(grid[childX][childY][0] == "W"):
                 continue
-            
-            grid[childX][childY].parent = curNode
-            childNodes.append(grid[childX][childY])
+
+            #create childNode and append it to the list
+            chNode = Node(curNode,childX,childY)
+            grid[childX][childY][0] = "B"
+            childNodes.append(chNode)
             
         for child in childNodes:
             #check to make sure that child is not already in openList
             inOpenList = False
             for node in openList:
-                if(node.x == childX and node.y == childY):
+                if(node == child):
                     inOpenList = True
                     break
             if(inOpenList):
-                print("3")
                 continue
 
              #calculate the g,h,f values
-            grid[childX][childY].g = curNode.g + 1
-            grid[childX][childY].h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)
-            grid[childX][childY].f = grid[childX][childY].g + grid[childX][childY].h
-
+            child.g = curNode.g + 1
+            child.h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)*0.5
+            child.f = child.g + child.h
 
             #check to see if the node is in the closed list, if it is check the g score
             inClosedList = False
             for node in closedList:
-                if(node.x == childX and node.y == childY):
+                if(node == child and child.g > node.g):
                     inClosedList = True
                     break
             if(inClosedList):
-                newG = curNode.g + 1
-                if(newG > grid[childX][childY].g):
-                    print("4")
-                    continue
-
+                continue
+        
             #add child to the open list
-            openList.append(grid[childX][childY])
+            openList.append(child)
 
     print(path)
     for coord in path:
-        grid[coord[0]][coord[1]].color = Color(0,0,0)
+        grid[coord[0]][coord[1]][0] = "P"
 
     draw(grid,win)
     pygame.display.update()
