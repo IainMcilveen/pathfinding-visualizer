@@ -44,8 +44,8 @@ def inputs():
     mouse = {}
     mouse["lmb"] = mousePressed[0]
     mouse["rmb"] = mousePressed[2]
-    mouse["xPos"] = mousePos[0]
-    mouse["yPos"] = mousePos[1]
+    mouse["posX"] = mousePos[0]
+    mouse["posY"] = mousePos[1]
 
     #get all keyboard inputs
     keyInputs = pygame.key.get_pressed()
@@ -62,21 +62,51 @@ def inputs():
 def draw(grid,win):
     for row in grid:
         for sqr in row:
-            #draw square with a lightly larger one for a black border
+            
+            #get the color of the square
+            if(sqr[0] == " "):
+                gridColor = Color(255,255,255)
+            elif(sqr[0] == "W"):
+                gridColor = Color(96,96,96)
+            elif(sqr[0] == "S"):
+                gridColor = Color(0,255,0)
+            elif(sqr[0] == "E"):
+                gridColor = Color(255,0,0)
+
+            #draw square with a slightly larger one for a black border
             pygame.draw.rect(win,Color(0,0,0),(sqr[1][0],sqr[1][1],gridScale,gridScale))
-            pygame.draw.rect(win,Color(255,255,255),(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
+            pygame.draw.rect(win,gridColor,(sqr[1][0]+1,sqr[1][1]+1,gridScale-2,gridScale-2))
 
 #update the grid with user input
-def updateGrid(grid,mouse,keys):
-    print(grid)
+def updateGrid(grid,mouse,keys,start,end):
+    #convert coordinates of mouse into grid coordinates
+    (gridX,gridY) = int(mouse["posX"]/gridScale),int(mouse["posY"]/gridScale)
+    
+    #set the grid points based on mouse and key presses
+    if(mouse["rmb"] == 1):
+        grid[gridX][gridY][0] = " "
+    elif(mouse["lmb"] == 1):
+        grid[gridX][gridY][0] = "W"
+    elif(keys["e"] == 1):
+        grid[end[0]][end[1]][0] = " "
+        grid[gridX][gridY][0] = "E"
+        end = (gridX,gridY)
+    elif(keys["s"] == 1):
+        grid[start[0]][start[1]][0] = " "
+        grid[gridX][gridY][0] = "S"
+        start = (gridX,gridY)
 
-
+    return start,end
 
 def main():
     
     #initialize window
     win = initializeWin()
     grid = initializeGrid()
+
+    #start and end variables
+    start = (0,0)
+    end = (31,17)
 
     #main loop
     while True:
@@ -90,6 +120,9 @@ def main():
         #get mouse and relevent key inputs        
         mouse, keys = inputs()
 
+        #update the grid
+        start,end = updateGrid(grid,mouse,keys,start,end)
+
         #draw a white screen
         win.fill(Color(255, 255, 255))
 
@@ -98,7 +131,7 @@ def main():
 
         #update the screen
         pygame.display.update()
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 
 if __name__ == "__main__":
