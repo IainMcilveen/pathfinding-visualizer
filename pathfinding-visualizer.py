@@ -15,7 +15,7 @@ class Node:
         self.f = 0
         self.g = 0
         self.h = 0
-    #allow for comparison between nodes
+    #overload equality operator
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
         
@@ -179,7 +179,7 @@ def astar(win,grid,sCords,eCords):
             if(inOpenList):
                 continue
 
-             #calculate the g,h,f values
+            #calculate the g,h,f values
             child.g = curNode.g + 1
             child.h = ((childX-eCords[0])**2 + (childY-eCords[1])**2)*0.5
             child.f = child.g + child.h
